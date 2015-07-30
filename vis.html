@@ -1,0 +1,203 @@
+<html>
+ <head>
+  <title>Global weather</title>
+ </head>
+ <body>
+  <div id="status">Loading...</div>
+  <script id="vertexShader" type="x-shader/x-vertex">
+  varying vec2 vUv;
+  void main(){
+   vUv=uv;
+   gl_Position=
+    projectionMatrix*modelViewMatrix*vec4(position,1.0);
+  }
+  </script>
+  <script id="fragmentShader" type="x-shader/x-fragment">
+  uniform sampler2D uvt;
+  uniform sampler2D uvtn;
+  uniform sampler2D coast;
+  uniform sampler2D palt;
+  uniform float meldt;
+  varying vec2 vUv;
+
+  vec4 icm_temp_scale2(float t){
+   //Assumes 0->-50oC, 1->+50oC
+   return(texture2D(palt,vec2(t,0.5)));
+  }
+
+  vec2 hsDistBearing(vec2 uv1,vec2 uv2){
+   vec2 ans;
+   float lat1=(uv1.y-.5)*3.1415;
+   float lat2=(uv2.y-.5)*3.1415;
+   float lon1=(uv1.x-.5)*3.1415*2.;
+   float lon2=(uv2.x-.5)*3.1415*2.;
+   float dlath=(lat2-lat1)/2.;
+   float dlonh=(lon2-lon1)/2.;
+   float havdlat=pow(dlath,2.);
+   float havdlon=pow(dlonh,2.);
+   ans.x=2.*asin(sqrt(
+    havdlat+cos(lat1)*cos(lat2)*havdlon
+   ));
+   float dn=sin(2.*dlonh)*cos(lat2);
+   float de=cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(2.*dlonh);
+   ans.y=1.5*3.1415-atan(dn,de);
+   return(ans);
+  }
+
+
+  float wind(vec2 vUv){
+   float num=101.; //num of horiz lines; use >1!
+   float hei=mod(vUv.y,1./num)*num;
+
+   float V=(.5+floor(vUv.y*num*.99999))/num;
+
+   float equatorWidth=2.*3.1415/num;
+   float lat=(V-.5)*3.1415;
+   float latWidth=cos(lat)*2.*3.1415;
+   float numHor=2.*floor(latWidth/equatorWidth)+2.;
+   float U=(.5+floor(vUv.x*numHor*.9999))/numHor;
+
+   vec4 tuvW=mix(texture2D(uvt,vec2(U,V)),texture2D(uvtn,vec2(U,V)),meldt);
+
+   vec2 wind=2.*tuvW.xy-1.;
+   float spd=length(wind);
+   float dir=atan(wind.y,wind.x);
+   vec2 db=hsDistBearing(vec2(U,V),vUv);
+   float angDiff=mod(dir-db.y+3.*3.1415,2.*3.1415)-3.1415;
+
+   float barbR=pow(angDiff,4.)*spd*equatorWidth/150.;
+   float s=(clamp(db.x-barbR,-0.001,0.001)+0.001)*500.;
+
+   return(s);
+  }
+
+  void main() {
+
+   vec4 tuv=mix(texture2D(uvt,vUv),texture2D(uvtn,vUv),meldt);
+   float t=tuv.b;
+   float u=tuv.r-.5;
+   float v=tuv.g-.5;
+
+
+   vec4 cc=texture2D(coast,vUv);
+   //vec4 field_col=icm_temp_scale2(length(vec2(u,v)));
+   vec4 field_col=icm_temp_scale2(t);
+
+
+   vec4 tempAndCoast=mix(vec4(1.,1.,1.,1.),field_col,cc.r);
+
+   //~ if(wind(vUv)>0.){
+    //~ gl_FragColor=vec4(0.,0.,0.,1.);
+   //~ }else{
+    gl_FragColor=mix(vec4(0.,0.,0.,1.),tempAndCoast,wind(vUv));
+   //~ }
+
+
+
+
+   //field_col*(1.-cc.a);
+
+  }
+
+  </script>
+
+  <script src="js/three.min.js"></script>
+  <script src="js/orbit.js"></script>
+  <script>
+   var img=new Image();
+   var c=document.createElement('canvas');
+   c.width=145; c.height=73;
+   var cn=document.createElement('canvas');
+   cn.width=145; cn.height=73;
+   var uvtTex=new THREE.Texture(c);
+   var uvtnTex=new THREE.Texture(cn);
+   uvtTex.anisotropy=0;
+   uvtTex.magFilter=THREE.LinearFilter;
+   uvtTex.minFilter=THREE.LinearFilter;
+   uvtnTex.anisotropy=0;
+   uvtnTex.magFilter=THREE.LinearFilter;
+   uvtnTex.minFilter=THREE.LinearFilter;
+
+
+   var sb=document.getElementById('status');
+   var ct=c.getContext('2d');
+   var ctn=cn.getContext('2d');
+   var nfr=1;
+   var lfr=0;
+
+   var temp_pal_tex=THREE.ImageUtils.loadTexture('pal.png');
+   temp_pal_tex.minFilter=THREE.NearestFilter;
+   var coast_tex=THREE.ImageUtils.loadTexture('coast.png');
+   coast_tex.minFilter=THREE.LinearFilter;
+   coast_tex.magFilter=THREE.LinearFilter;
+
+
+   function putFrame(frame){
+    ct.drawImage(img,0,73*frame,144,73,-72,0,144,73);
+    ct.drawImage(img,0,73*frame,144,73,72,0,144,73);
+
+    var framen=frame+1;
+    if(framen>364) framen=364;
+    ctn.drawImage(img,0,73*framen,144,73,-72,0,144,73);
+    ctn.drawImage(img,0,73*framen,144,73,72,0,144,73);
+
+    console.log("X");
+
+    uvtTex.needsUpdate=true;
+    uvtnTex.needsUpdate=true;
+    sb.innerHTML='Current frame='+(frame+1)+'/'+nfr;
+   }
+
+   var uniforms={
+    uvt:{type:'t',value:uvtTex},
+    uvtn:{type:'t',value:uvtnTex},
+    palt:{type:'t',value:temp_pal_tex},
+    coast:{type:'t',value:coast_tex},
+    meldt:{type:'1f',value:.5}
+   };
+
+   var scene=new THREE.Scene();
+   var camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);
+   camera.position.x=2;
+   camera.position.y=0;
+   camera.position.z=0;
+   camera.lookAt({x:0,y:0,z:0});
+   controls=new THREE.OrbitControls(camera);
+   controls.autoRotate=true;
+   controls.minDistance=1.1;
+   controls.maxDistance=3;
+
+   var renderer=new THREE.WebGLRenderer();
+   renderer.setSize(window.innerWidth,window.innerHeight);
+   document.body.appendChild(renderer.domElement);
+
+   var pg=new THREE.SphereGeometry(1,30,30);
+   //~ var pg=new THREE.PlaneGeometry(4,2,10,10); //Flat map in Mercator
+   var vertShader=document.getElementById('vertexShader').innerHTML;
+   var fragShader=document.getElementById('fragmentShader').innerHTML;
+   var px=new THREE.ShaderMaterial({
+    uniforms:uniforms,
+    vertexShader:vertShader,
+    fragmentShader:fragShader
+   });
+   var pm=new THREE.Mesh(pg,px);
+   scene.add(pm);
+
+   function aloop(t){
+    window.requestAnimationFrame(aloop);
+    var day=(t/500)%365;
+    var dayFra=day-Math.floor(day);
+    putFrame(Math.floor(day));
+    uniforms.meldt.value=dayFra;
+    renderer.render(scene,camera);
+   }
+
+   img.onload=function(){
+    nfr=this.height/73;
+    putFrame(0);
+    aloop(0);
+   };
+   img.src='uvt.png';
+  </script>
+ </body>
+</html>
