@@ -2,8 +2,9 @@
  <head>
   <title>Global weather</title>
  </head>
- <body>
-  <div id="status">Loading...</div>
+ <body style="margin:0;padding:0;">
+  <div id="status" style="position:fixed;top:10px;right:10px;color:white;">Loading...</div>
+  <div id="legend" style="position:fixed;top:50px;right:10px;width:86px;height:400px;background-image:url('leg.png');">
   <script id="vertexShader" type="x-shader/x-vertex">
   varying vec2 vUv;
   void main(){
