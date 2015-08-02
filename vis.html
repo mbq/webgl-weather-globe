@@ -164,6 +164,7 @@
    camera.position.z=0;
    camera.lookAt({x:0,y:0,z:0});
    controls=new THREE.OrbitControls(camera);
+   controls.pan=false;
    controls.autoRotate=true;
    controls.minDistance=1.1;
    controls.maxDistance=3;

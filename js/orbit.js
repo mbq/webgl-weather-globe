@@ -519,6 +519,8 @@ THREE.OrbitControls = function ( object, domElement, localElement ) {
     scope.rotateUp( 2 * Math.PI * rotateDelta.y / element.clientHeight * scope.rotateSpeed );
 
     rotateStart.copy( rotateEnd );
+
+    scope.update();
     break;
 
    case 2: // two-fingered touch: dolly
@@ -543,6 +545,8 @@ THREE.OrbitControls = function ( object, domElement, localElement ) {
     }
 
     dollyStart.copy( dollyEnd );
+
+    scope.update();
     break;
 
    case 3: // three-fingered touch: pan
