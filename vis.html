@@ -19,6 +19,7 @@
   uniform sampler2D coast;
   uniform sampler2D palt;
   uniform float meldt;
+  uniform float bkgSource;
   varying vec2 vUv;
 
   vec4 icm_temp_scale2(float t){
@@ -45,30 +46,44 @@
    return(ans);
   }
 
+  float asinh(float x){
+   return(log(x+sqrt(x*x+1.)));
+  }
 
-  float wind(vec2 vUv){
-   float num=101.; //num of horiz lines; use >1!
-   float hei=mod(vUv.y,1./num)*num;
-
-   float V=(.5+floor(vUv.y*num*.99999))/num;
-
-   float equatorWidth=2.*3.1415/num;
-   float lat=(V-.5)*3.1415;
-   float latWidth=cos(lat)*2.*3.1415;
-   float numHor=2.*floor(latWidth/equatorWidth)+2.;
-   float U=(.5+floor(vUv.x*numHor*.9999))/numHor;
-
+  float inBarb(float U,float V,float chunkHeight){
    vec4 tuvW=mix(texture2D(uvt,vec2(U,V)),texture2D(uvtn,vec2(U,V)),meldt);
-
    vec2 wind=2.*tuvW.xy-1.;
-   float spd=length(wind);
+   //float spd=asinh(length(wind))/1.15; //Normalised to 0,1
+   //float spd=length(wind)/sqrt(2.);
+   float spd=clamp(length(wind)/0.9,0.,1.);
+   //Ignore small wind, <4m/s
+   if(spd<0.1) return(1.);
    float dir=atan(wind.y,wind.x);
    vec2 db=hsDistBearing(vec2(U,V),vUv);
    float angDiff=mod(dir-db.y+3.*3.1415,2.*3.1415)-3.1415;
 
-   float barbR=pow(angDiff,4.)*spd*equatorWidth/150.;
-   float s=(clamp(db.x-barbR,-0.001,0.001)+0.001)*500.;
+   float barbR=pow(angDiff,4.)/pow(3.1415,4.)*spd*chunkHeight;
+   float s=(clamp(db.x-barbR,-0.0001,0.0001)+0.0001)*5000.;
+   return(s);
+  }
+  float wind(){
+   float num=77.;
+   float hei=mod(vUv.y,1./num)*num;
 
+   float V=(.5+floor(vUv.y*num*.99999))/num;
+   float Vp=(.5+ceil(vUv.y*num*.99999))/num;
+
+   float chunkHeight=3.1415/num;
+   float lat=(V-.5)*3.1415;
+   float latWidth=cos(lat)*2.*3.1415;
+
+   //TODO: Something is wrong on the poles.
+
+   float numHor=floor(latWidth/chunkHeight);
+   //if(latWidth<1.) numHor=3.;
+   float U=(.5+floor(vUv.x*numHor*.9999))/numHor;
+
+   float s=inBarb(U,V,chunkHeight);
    return(s);
   }
 
@@ -81,23 +96,17 @@
 
 
    vec4 cc=texture2D(coast,vUv);
-   //vec4 field_col=icm_temp_scale2(length(vec2(u,v)));
-   vec4 field_col=icm_temp_scale2(t);
+
+   vec4 field_col;
+   if(bkgSource>0.){
+    field_col=icm_temp_scale2(t);
+   }else{
+    field_col=icm_temp_scale2(length(vec2(u,v))/sqrt(2.)/2.+.5);
+   }
 
 
    vec4 tempAndCoast=mix(vec4(1.,1.,1.,1.),field_col,cc.r);
-
-   //~ if(wind(vUv)>0.){
-    //~ gl_FragColor=vec4(0.,0.,0.,1.);
-   //~ }else{
-    gl_FragColor=mix(vec4(0.,0.,0.,1.),tempAndCoast,wind(vUv));
-   //~ }
-
-
-
-
-   //field_col*(1.-cc.a);
-
+   gl_FragColor=mix(vec4(0.,0.,0.,1.),tempAndCoast,wind());
   }
 
   </script>
@@ -142,8 +151,6 @@
     ctn.drawImage(img,0,73*framen,144,73,-72,0,144,73);
     ctn.drawImage(img,0,73*framen,144,73,72,0,144,73);
 
-    console.log("X");
-
     uvtTex.needsUpdate=true;
     uvtnTex.needsUpdate=true;
     sb.innerHTML='Current frame='+(frame+1)+'/'+nfr;
@@ -154,7 +161,8 @@
     uvtn:{type:'t',value:uvtnTex},
     palt:{type:'t',value:temp_pal_tex},
     coast:{type:'t',value:coast_tex},
-    meldt:{type:'1f',value:.5}
+    meldt:{type:'1f',value:.5},
+    bkgSource:{type:'1f',value:1.}
    };
 
    var scene=new THREE.Scene();
