@@ -50,6 +50,11 @@
    return(log(x+sqrt(x*x+1.)));
   }
 
+  float pow4(float x){
+   //return(pow(x,4.));
+   return(x*x*x*x);
+  }
+
   float inBarb(float U,float V,float chunkHeight){
    vec4 tuvW=mix(texture2D(uvt,vec2(U,V)),texture2D(uvtn,vec2(U,V)),meldt);
    vec2 wind=2.*tuvW.xy-1.;
@@ -62,7 +67,7 @@
    vec2 db=hsDistBearing(vec2(U,V),vUv);
    float angDiff=mod(dir-db.y+3.*3.1415,2.*3.1415)-3.1415;
 
-   float barbR=pow(angDiff,4.)/pow(3.1415,4.)*spd*chunkHeight;
+   float barbR=pow4(angDiff)/pow4(3.1415)*spd*chunkHeight;
    float s=(clamp(db.x-barbR,-0.0001,0.0001)+0.0001)*5000.;
    return(s);
   }
@@ -186,7 +191,7 @@
    renderer.setSize(window.innerWidth,window.innerHeight);
    document.body.appendChild(renderer.domElement);
 
-   var pg=new THREE.SphereGeometry(1,30,30);
+   var pg=new THREE.SphereGeometry(1,60,60);
    //~ var pg=new THREE.PlaneGeometry(4,2,10,10); //Flat map in Mercator
    var vertShader=document.getElementById('vertexShader').innerHTML;
    var fragShader=document.getElementById('fragmentShader').innerHTML;
