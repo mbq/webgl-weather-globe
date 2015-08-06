@@ -3,7 +3,7 @@
   <title>Global weather</title>
  </head>
  <body style="margin:0;padding:0;">
-  <div id="status" style="position:fixed;top:10px;right:10px;color:white;">Loading...</div>
+  <div id="status" style="position:fixed;bottom:70px;left:10px;color:white;font-family:sans;">Loading...</div>
   <div id="legend" style="position:fixed;top:50px;right:10px;width:86px;height:400px;background-image:url('leg.png');">
   <script id="vertexShader" type="x-shader/x-vertex">
   varying vec2 vUv;
@@ -148,7 +148,7 @@
    coast_tex.magFilter=THREE.LinearFilter;
 
 
-   function putFrame(frame){
+   function putFrame(frame,df){
     ct.drawImage(img,0,73*frame,144,73,-72,0,144,73);
     ct.drawImage(img,0,73*frame,144,73,72,0,144,73);
 
@@ -159,7 +159,8 @@
 
     uvtTex.needsUpdate=true;
     uvtnTex.needsUpdate=true;
-    sb.innerHTML='Current frame='+(frame+1)+'/'+nfr;
+    var dd=''+new Date(Date.UTC(2014,0,1,0,0,0,0)+(frame+df)*24*60*60*1000);
+    sb.innerHTML=dd+' '+(frame+1)+'/'+nfr;
    }
 
    var uniforms={
@@ -218,16 +219,16 @@
      if(newS>1.) newS-=1.;
      tb.setS(newS);
     }
-    var day=tb.s*365.;
+    var day=tb.s*364;
     var dayFra=day-Math.floor(day);
-    putFrame(Math.floor(day));
+    putFrame(Math.floor(day),dayFra);
     uniforms.meldt.value=dayFra;
     renderer.render(scene,camera);
    }
 
    img.onload=function(){
     nfr=this.height/73;
-    putFrame(0);
+    putFrame(0,0);
     aloop(0);
    };
    img.src='uvt.png';
