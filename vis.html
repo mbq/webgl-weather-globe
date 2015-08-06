@@ -118,6 +118,7 @@
 
   <script src="js/three.min.js"></script>
   <script src="js/orbit.js"></script>
+  <script src="js/timebar.js"></script>
   <script>
    var img=new Image();
    var c=document.createElement('canvas');
@@ -203,9 +204,21 @@
    var pm=new THREE.Mesh(pg,px);
    scene.add(pm);
 
+   var tb=new Timebar(0.,true,10,15,50);
+
+   var lastt=null;
+
    function aloop(t){
     window.requestAnimationFrame(aloop);
-    var day=(t/500)%365;
+    if(!lastt) lastt=t;
+    var dt=(t-lastt)/1000/365*2; //2 days per second
+    lastt=t;
+    if(tb.play){
+     var newS=tb.s+dt;
+     if(newS>1.) newS-=1.;
+     tb.setS(newS);
+    }
+    var day=tb.s*365.;
     var dayFra=day-Math.floor(day);
     putFrame(Math.floor(day));
     uniforms.meldt.value=dayFra;
@@ -218,6 +231,8 @@
     aloop(0);
    };
    img.src='uvt.png';
+
+
   </script>
  </body>
 </html>
