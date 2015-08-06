@@ -3,7 +3,7 @@
 var Timebar=function(s0,play0,mar,height,bottom){
  var k=document.createElement('canvas');
  k.style.position='fixed';
- k.style.bottom=bottom;
+ k.style.bottom=''+bottom+'px';
  k.style.left='0px';
  k.width=window.innerWidth;
  k.height=height;
