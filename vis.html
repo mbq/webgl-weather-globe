@@ -4,10 +4,12 @@
   <title>Global weather 2014</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1">
+  <link rel="icon" type="image/png" href="favicon.png"/>
  </head>
- <body style="margin:0;padding:0;">
+ <body style="margin:0;padding:0;overflow:hidden;">
   <div id="status" style="position:fixed;bottom:70px;left:10px;color:white;font-family:sans;">Loading...</div>
-  <div id="legend" style="position:fixed;top:50px;right:10px;width:86px;height:400px;background-image:url('leg.png');">
+  <button id="switcher" style="position:fixed;top:40px;right:10px;width:93px;font-family:sans;font-size:smaller;">Toggle</button>
+  <div id="legend" style="position:fixed;top:65px;right:10px;width:93px;height:397px;background-image:url('leg.png');"></div>
   <script id="vertexShader" type="x-shader/x-vertex">
   varying vec2 vUv;
   void main(){
@@ -54,17 +56,15 @@
   }
 
   float pow4(float x){
-   //return(pow(x,4.));
    return(x*x*x*x);
   }
 
   float inBarb(float U,float V,float chunkHeight){
    vec4 tuvW=mix(texture2D(uvt,vec2(U,V)),texture2D(uvtn,vec2(U,V)),meldt);
    vec2 wind=2.*tuvW.xy-1.;
-   //float spd=asinh(length(wind))/1.15; //Normalised to 0,1
-   //float spd=length(wind)/sqrt(2.);
    float spd=clamp(length(wind)/0.9,0.,1.);
-   //Ignore small wind, <4m/s
+
+   //Ignore small wind
    if(spd<0.1) return(1.);
    float dir=atan(wind.y,wind.x);
    vec2 db=hsDistBearing(vec2(U,V),vUv);
@@ -85,10 +85,7 @@
    float lat=(V-.5)*3.1415;
    float latWidth=cos(lat)*2.*3.1415;
 
-   //TODO: Something is wrong on the poles.
-
    float numHor=floor(latWidth/chunkHeight);
-   //if(latWidth<1.) numHor=3.;
    float U=(.5+floor(vUv.x*numHor*.9999))/numHor;
 
    float s=inBarb(U,V,chunkHeight);
@@ -96,27 +93,22 @@
   }
 
   void main() {
-
    vec4 tuv=mix(texture2D(uvt,vUv),texture2D(uvtn,vUv),meldt);
    float t=tuv.b;
    float u=tuv.r-.5;
    float v=tuv.g-.5;
 
-
-   vec4 cc=texture2D(coast,vUv);
-
    vec4 field_col;
    if(bkgSource>0.){
     field_col=icm_temp_scale2(t);
    }else{
-    field_col=icm_temp_scale2(length(vec2(u,v))/sqrt(2.)/2.+.5);
+    field_col=icm_temp_scale2(length(vec2(u,v))/sqrt(2.)*2.+.5);
    }
 
-
+   vec4 cc=texture2D(coast,vUv);
    vec4 tempAndCoast=mix(vec4(1.,1.,1.,1.),field_col,cc.r);
    gl_FragColor=mix(vec4(0.,0.,0.,1.),tempAndCoast,wind());
   }
-
   </script>
 
   <script src="js/three.min.js"></script>
@@ -162,8 +154,8 @@
 
     uvtTex.needsUpdate=true;
     uvtnTex.needsUpdate=true;
-    var dd=''+new Date(Date.UTC(2014,0,1,0,0,0,0)+(frame+df)*24*60*60*1000);
-    sb.innerHTML=dd+' '+(frame+1)+'/'+nfr;
+    var dd=new Date(Date.UTC(2014,0,1,0,0,0,0)+(frame+df)*24*60*60*1000);
+    sb.innerHTML=dd.toLocaleString();
    }
 
    var uniforms={
@@ -174,6 +166,11 @@
     meldt:{type:'1f',value:.5},
     bkgSource:{type:'1f',value:1.}
    };
+
+   document.getElementById('switcher').addEventListener('click',function(){
+    console.log("X");
+    uniforms.bkgSource.value=1-uniforms.bkgSource.value;
+   },false);
 
    var scene=new THREE.Scene();
    var camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);

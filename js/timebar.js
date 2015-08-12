@@ -17,12 +17,12 @@ var Timebar=function(s0,play0,mar,height,bottom){
  function paint(){
   c.clearRect(0,0,k.width,k.height);
 
-  c.strokeStyle="#000";
+  c.strokeStyle="rgba(170,170,170,0.5)";
   c.strokeWidth=20;
-  c.fillStyle="#ccc";
-  c.fillRect(mar*3,0,(k.width-4*mar),k.height);
+  c.fillStyle="rgba(170,170,170,0.5)";
+  c.fillRect(mar*3-1,0,(k.width-4*mar)+1,k.height);
 
-  if(myself.play) c.fillStyle="#a00";
+  if(myself.play) c.fillStyle="#eee";
   c.beginPath();
   c.moveTo(mar,0.1*k.height);
   c.lineTo(2.7*mar,k.height/2);
@@ -31,9 +31,9 @@ var Timebar=function(s0,play0,mar,height,bottom){
   c.fill();
   c.stroke();
 
-  c.fillStyle="#a00";
-  c.fillRect(mar*3,0,(k.width-4*mar)*myself.s,k.height);
-  c.strokeRect(mar*3,0,(k.width-4*mar),k.height);
+  c.fillStyle="#eee";
+  c.fillRect(mar*3,1,(k.width-4*mar)*myself.s,k.height-2);
+  //c.strokeRect(mar*3,0,(k.width-4*mar),k.height);
  }
  this.repaint=paint;
 
