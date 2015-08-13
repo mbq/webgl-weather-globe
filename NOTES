@@ -1,9 +1,0 @@
-Canonic URL seem to be (from PSD, whatever this is)
-http://140.172.38.100/psd/thredds/fileServer/Datasets/ncep/uwnd.2015.nc
-http://140.172.38.100/psd/thredds/fileServer/Datasets/ncep/vwnd.2015.nc
-http://140.172.38.100/psd/thredds/fileServer/Datasets/ncep/air.2015.nc
-
-Citation for data:
-http://www.esrl.noaa.gov/psd/data/gridded/data.ncep.reanalysis.html
-
-Uses Three.js and orbit controls plugin.
