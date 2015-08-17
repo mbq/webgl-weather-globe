@@ -8,6 +8,13 @@
  </head>
  <body style="margin:0;padding:0;overflow:hidden;">
   <div id="status" style="position:fixed;bottom:70px;left:10px;color:white;font-family:sans;">Loading...</div>
+  <div id="notes" style="position:fixed;bottom:30px;left:10px;color:white;font-family:sans;font-size:12px;">
+    Average daily wind and temperature at 1000hPa level;
+    <a style="color:white" href="http://www.esrl.noaa.gov/psd/data/gridded/data.ncep.reanalysis.html">data from NCAR/NCEP</a>,
+    <a style="color:white" href="http://www.naturalearthdata.com/downloads/110m-physical-vectors/">coastline from NE</a>,
+    <a style="color:white" href="https://mbq.me/blog/webgl-weather-globe/">implementation details</a>.
+  </div>
+
   <button id="switcher" style="position:fixed;top:40px;right:10px;width:93px;font-family:sans;font-size:smaller;">Toggle</button>
   <div id="legend" style="position:fixed;top:65px;right:10px;width:93px;height:397px;background-image:url('leg.png');"></div>
   <script id="vertexShader" type="x-shader/x-vertex">
